@@ -12,6 +12,23 @@ type Props = {
   saveEdit: (id: number) => void
   cancelEdit: () => void
   deleteNote: (id: number) => void
+  search: string
+}
+
+function highlight(text: string, query: string) {
+  if (!query) return text
+
+  const parts = text.split(new RegExp(`(${query})`, "gi"))
+
+  return parts.map((part, i) =>
+    part.toLowerCase() === query.toLowerCase() ? (
+      <span key={i} className="bg-yellow-200">
+        {part}
+      </span>
+    ) : (
+      part
+    )
+  )
 }
 
 export default function NoteItem({
@@ -23,6 +40,7 @@ export default function NoteItem({
   saveEdit,
   cancelEdit,
   deleteNote,
+  search,
 }: Props) {
   const isEditing = editingId === note.id
 
@@ -47,7 +65,9 @@ export default function NoteItem({
         </>
       ) : (
         <>
-          <p className="mb-2">{note.content}</p>
+          <p className="mb-2">
+            {highlight(note.content, search)}
+          </p>
 
           <button onClick={() => startEdit(note)} className="text-blue-500 mr-4">
             Edit

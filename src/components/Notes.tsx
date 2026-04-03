@@ -118,6 +118,7 @@ export default function Notes() {
               saveEdit={saveEdit}
               cancelEdit={cancelEdit}
               deleteNote={deleteNote}
+              search={search}
             />
           ))}
         </div>
