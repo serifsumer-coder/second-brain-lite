@@ -5,27 +5,32 @@ type Note = {
   content: string
 }
 
+function useLocalStorage<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState<T>(() => {
+    const saved = localStorage.getItem(key)
+    return saved ? JSON.parse(saved) : initialValue
+  })
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value))
+  }, [key, value])
+
+  return [value, setValue] as const
+}
+
 export default function Notes() {
-  const [notes, setNotes] = useState<Note[]>([])
+  const [notes, setNotes] = useLocalStorage<Note[]>("notes", [])
   const [newNote, setNewNote] = useState("")
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingContent, setEditingContent] = useState("")
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
-  // 🔹 LOAD
+  // 🔹 FAKE LOADING (hissettiriyoruz)
   useEffect(() => {
-    const saved = localStorage.getItem("notes")
-    if (saved) {
-      setNotes(JSON.parse(saved))
-    }
-    setIsLoaded(true)
+    setTimeout(() => {
+      setLoaded(true)
+    }, 300)
   }, [])
-
-  // 🔹 SAVE (SADECE LOAD TAMAMSA)
-  useEffect(() => {
-    if (!isLoaded) return
-    localStorage.setItem("notes", JSON.stringify(notes))
-  }, [notes, isLoaded])
 
   const addNote = (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,6 +59,15 @@ export default function Notes() {
     setEditingContent("")
   }
 
+  // 🔥 LOADING EKRANI
+  if (!loaded) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center pt-20">
       <div className="w-full max-w-xl">
@@ -65,7 +79,6 @@ export default function Notes() {
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             className="border rounded-lg p-2 w-full"
-            placeholder="Write a note..."
           />
           <button className="bg-blue-500 text-white px-4 rounded-lg">
             Add
