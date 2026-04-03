@@ -12,15 +12,21 @@ export default function Notes() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingContent, setEditingContent] = useState("")
   const [search, setSearch] = useState("")
-  const [dark, setDark] = useState(false)
 
-  // 🌙 DARK MODE APPLY
+  // 🌙 DARK MODE (persist)
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("darkMode")
+    return saved ? JSON.parse(saved) : false
+  })
+
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add("dark")
     } else {
       document.documentElement.classList.remove("dark")
     }
+
+    localStorage.setItem("darkMode", JSON.stringify(dark))
   }, [dark])
 
   // ➕ ADD NOTE
@@ -61,12 +67,17 @@ export default function Notes() {
     setEditingContent("")
   }
 
+  const clearAll = () => {
+    if (!confirm("Delete all notes?")) return
+    setNotes([])
+  }
+
   const filteredNotes = notes.filter((note) =>
     note.content.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
-    <div className="min-h-screen flex justify-center pt-20 bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen flex justify-center pt-20 bg-gray-100 dark:bg-gray-900 transition">
 
       <div className="w-full max-w-xl">
 
@@ -92,6 +103,16 @@ export default function Notes() {
           className="border rounded-lg p-2 w-full mb-3 dark:bg-gray-800 dark:text-white"
         />
 
+        {/* 🧹 CLEAR ALL */}
+        {notes.length > 0 && (
+          <button
+            onClick={clearAll}
+            className="text-red-500 text-sm mb-3"
+          >
+            Clear all notes
+          </button>
+        )}
+
         {/* ➕ INPUT */}
         <div className="flex gap-2">
           <input
@@ -116,6 +137,7 @@ export default function Notes() {
           </p>
         )}
 
+        {/* 📋 LIST */}
         <div className="space-y-3 mt-4">
           {filteredNotes.map((note) => (
             <NoteItem
