@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import NoteForm from "./NoteForm"
+import NoteItem from "./NoteItem"
 
 type Note = {
   id: number
@@ -11,11 +13,12 @@ function useLocalStorage<T>(key: string, initialValue: T) {
     return saved ? JSON.parse(saved) : initialValue
   })
 
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value))
-  }, [key, value])
+  const setAndSave = (newValue: T) => {
+    setValue(newValue)
+    localStorage.setItem(key, JSON.stringify(newValue))
+  }
 
-  return [value, setValue] as const
+  return [value, setAndSave] as const
 }
 
 export default function Notes() {
@@ -23,14 +26,7 @@ export default function Notes() {
   const [newNote, setNewNote] = useState("")
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingContent, setEditingContent] = useState("")
-  const [loaded, setLoaded] = useState(false)
-
-  // 🔹 FAKE LOADING (hissettiriyoruz)
-  useEffect(() => {
-    setTimeout(() => {
-      setLoaded(true)
-    }, 300)
-  }, [])
+  const [search, setSearch] = useState("")
 
   const addNote = (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,14 +55,15 @@ export default function Notes() {
     setEditingContent("")
   }
 
-  // 🔥 LOADING EKRANI
-  if (!loaded) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    )
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditingContent("")
   }
+
+  // 🔥 SEARCH FILTER
+  const filteredNotes = notes.filter((note) =>
+    note.content.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center pt-20">
@@ -74,67 +71,33 @@ export default function Notes() {
 
         <h1 className="text-2xl font-bold mb-6 text-center">My Notes</h1>
 
-        <form onSubmit={addNote} className="flex gap-2 mb-6">
-          <input
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            className="border rounded-lg p-2 w-full"
-          />
-          <button className="bg-blue-500 text-white px-4 rounded-lg">
-            Add
-          </button>
-        </form>
+        {/* 🔍 SEARCH INPUT */}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search notes..."
+          className="border rounded-lg p-2 w-full mb-4"
+        />
+
+        <NoteForm
+          newNote={newNote}
+          setNewNote={setNewNote}
+          addNote={addNote}
+        />
 
         <div className="space-y-3">
-          {notes.map((note) => (
-            <div
+          {filteredNotes.map((note) => (
+            <NoteItem
               key={note.id}
-              className="p-4 bg-white border rounded-xl shadow-sm"
-            >
-
-              {editingId === note.id ? (
-                <>
-                  <input
-                    value={editingContent}
-                    onChange={(e) => setEditingContent(e.target.value)}
-                    className="border p-2 w-full rounded mb-2"
-                  />
-
-                  <button
-                    onClick={() => saveEdit(note.id)}
-                    className="text-blue-500 mr-4"
-                  >
-                    Save
-                  </button>
-
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="text-gray-500"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="mb-2">{note.content}</p>
-
-                  <button
-                    onClick={() => startEdit(note)}
-                    className="text-blue-500 mr-4"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    onClick={() => deleteNote(note.id)}
-                    className="text-red-500"
-                  >
-                    Delete
-                  </button>
-                </>
-              )}
-
-            </div>
+              note={note}
+              editingId={editingId}
+              editingContent={editingContent}
+              setEditingContent={setEditingContent}
+              startEdit={startEdit}
+              saveEdit={saveEdit}
+              cancelEdit={cancelEdit}
+              deleteNote={deleteNote}
+            />
           ))}
         </div>
 
