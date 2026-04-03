@@ -1,7 +1,8 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* küçük global stil */
-body {
-  background-color: #f9fafb;
-  font-family: system-ui, sans-serif;
+/* 🌙 Dark mode destek */
+html.dark {
+  color-scheme: dark;
 }
