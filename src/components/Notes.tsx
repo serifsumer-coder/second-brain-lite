@@ -20,13 +20,18 @@ export default function Notes() {
   }
 
   const deleteNote = (id: number) => {
-    setNotes(notes.filter((note) => note.id !== id))
+    setNotes(notes.filter((n) => n.id !== id))
   }
 
-  const updateNote = (id: number) => {
+  const startEdit = (note: Note) => {
+    setEditingId(note.id)
+    setEditingContent(note.content)
+  }
+
+  const saveEdit = (id: number) => {
     setNotes(
-      notes.map((note) =>
-        note.id === id ? { ...note, content: editingContent } : note
+      notes.map((n) =>
+        n.id === id ? { ...n, content: editingContent } : n
       )
     )
     setEditingId(null)
@@ -52,52 +57,56 @@ export default function Notes() {
         </form>
 
         <div className="space-y-3">
-          {notes.map((note) => {
-            const isEditing = editingId === note.id
+          {notes.map((note) => (
+            <div
+              key={note.id}
+              className="p-4 bg-white border rounded-xl shadow-sm"
+            >
 
-            return (
-              <div
-                key={note.id}
-                className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex justify-between items-start"
-              >
+              {editingId === note.id ? (
+                <>
+                  <input
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    className="border p-2 w-full rounded mb-2"
+                  />
 
-                {/* EDIT MODE */}
-                {isEditing ? (
-                  <div className="flex-1">
-                    <input
-                      value={editingContent}
-                      onChange={(e) => setEditingContent(e.target.value)}
-                      className="border p-2 w-full rounded mb-2"
-                    />
-                    <button
-                      onClick={() => updateNote(note.id)}
-                      className="text-blue-500"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  /* VIEW MODE */
-                  <div
-                    onClick={() => {
-                      setEditingId(note.id)
-                      setEditingContent(note.content)
-                    }}
-                    className="flex-1 cursor-pointer"
+                  <button
+                    onClick={() => saveEdit(note.id)}
+                    className="text-blue-500 mr-4"
                   >
-                    {note.content}
-                  </div>
-                )}
+                    Save
+                  </button>
 
-                <button
-                  onClick={() => deleteNote(note.id)}
-                  className="text-red-500 ml-4"
-                >
-                  Delete
-                </button>
-              </div>
-            )
-          })}
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className="text-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="mb-2">{note.content}</p>
+
+                  <button
+                    onClick={() => startEdit(note)}
+                    className="text-blue-500 mr-4"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => deleteNote(note.id)}
+                    className="text-red-500"
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
+
+            </div>
+          ))}
         </div>
 
       </div>
