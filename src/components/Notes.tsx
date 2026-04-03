@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import NoteForm from "./NoteForm"
 import NoteItem from "./NoteItem"
 
 type Note = {
@@ -7,28 +6,15 @@ type Note = {
   content: string
 }
 
-function useLocalStorage<T>(key: string, initialValue: T) {
-  const [value, setValue] = useState<T>(() => {
-    const saved = localStorage.getItem(key)
-    return saved ? JSON.parse(saved) : initialValue
-  })
-
-  const setAndSave = (newValue: T) => {
-    setValue(newValue)
-    localStorage.setItem(key, JSON.stringify(newValue))
-  }
-
-  return [value, setAndSave] as const
-}
-
 export default function Notes() {
-  const [notes, setNotes] = useLocalStorage<Note[]>("notes", [])
+  const [notes, setNotes] = useState<Note[]>([])
   const [newNote, setNewNote] = useState("")
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingContent, setEditingContent] = useState("")
   const [search, setSearch] = useState("")
-  const [dark, setDark] = useLocalStorage<boolean>("darkMode", false)
+  const [dark, setDark] = useState(false)
 
+  // 🌙 DARK MODE APPLY
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add("dark")
@@ -37,12 +23,18 @@ export default function Notes() {
     }
   }, [dark])
 
-  const addNote = (e: React.FormEvent) => {
-    e.preventDefault()
+  // ➕ ADD NOTE
+  const addNote = () => {
     if (!newNote.trim()) return
-
     setNotes([...notes, { id: Date.now(), content: newNote }])
     setNewNote("")
+  }
+
+  // ⌨️ ENTER KEY
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      addNote()
+    }
   }
 
   const deleteNote = (id: number) => {
@@ -69,25 +61,20 @@ export default function Notes() {
     setEditingContent("")
   }
 
-  const clearAll = () => {
-    if (!confirm("Delete all notes?")) return
-    setNotes([])
-  }
-
   const filteredNotes = notes.filter((note) =>
     note.content.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
-    <div className="min-h-screen flex justify-center pt-20 bg-gray-100 dark:bg-gray-900 transition">
+    <div className="min-h-screen flex justify-center pt-20 bg-gray-100 dark:bg-gray-900">
 
       <div className="w-full max-w-xl">
 
-        {/* DARK MODE TOGGLE */}
+        {/* 🌙 TOGGLE */}
         <div className="flex justify-end mb-2">
           <button
             onClick={() => setDark(!dark)}
-            className="text-sm px-3 py-1 border rounded-lg dark:text-white"
+            className="px-3 py-1 border rounded dark:text-white"
           >
             {dark ? "☀️ Light" : "🌙 Dark"}
           </button>
@@ -97,6 +84,7 @@ export default function Notes() {
           My Notes
         </h1>
 
+        {/* 🔍 SEARCH */}
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -104,20 +92,23 @@ export default function Notes() {
           className="border rounded-lg p-2 w-full mb-3 dark:bg-gray-800 dark:text-white"
         />
 
-        {notes.length > 0 && (
-          <button
-            onClick={clearAll}
-            className="text-sm text-red-500 mb-4"
-          >
-            Clear all notes
-          </button>
-        )}
+        {/* ➕ INPUT */}
+        <div className="flex gap-2">
+          <input
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Write a note..."
+            className="border rounded-lg p-2 w-full dark:bg-gray-800 dark:text-white"
+          />
 
-        <NoteForm
-          newNote={newNote}
-          setNewNote={setNewNote}
-          addNote={addNote}
-        />
+          <button
+            onClick={addNote}
+            className="bg-blue-500 text-white px-4 rounded-lg"
+          >
+            Add
+          </button>
+        </div>
 
         {filteredNotes.length === 0 && (
           <p className="text-center text-gray-400 mt-10">
