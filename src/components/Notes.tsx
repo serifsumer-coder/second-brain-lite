@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 type Note = {
   id: number
@@ -10,6 +10,22 @@ export default function Notes() {
   const [newNote, setNewNote] = useState("")
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingContent, setEditingContent] = useState("")
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // 🔹 LOAD
+  useEffect(() => {
+    const saved = localStorage.getItem("notes")
+    if (saved) {
+      setNotes(JSON.parse(saved))
+    }
+    setIsLoaded(true)
+  }, [])
+
+  // 🔹 SAVE (SADECE LOAD TAMAMSA)
+  useEffect(() => {
+    if (!isLoaded) return
+    localStorage.setItem("notes", JSON.stringify(notes))
+  }, [notes, isLoaded])
 
   const addNote = (e: React.FormEvent) => {
     e.preventDefault()
