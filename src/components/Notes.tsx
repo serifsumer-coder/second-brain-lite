@@ -60,7 +60,11 @@ export default function Notes() {
     setEditingContent("")
   }
 
-  // 🔥 SEARCH FILTER
+  const clearAll = () => {
+    if (!confirm("Delete all notes?")) return
+    setNotes([])
+  }
+
   const filteredNotes = notes.filter((note) =>
     note.content.toLowerCase().includes(search.toLowerCase())
   )
@@ -69,15 +73,25 @@ export default function Notes() {
     <div className="min-h-screen bg-gray-100 flex justify-center pt-20">
       <div className="w-full max-w-xl">
 
-        <h1 className="text-2xl font-bold mb-6 text-center">My Notes</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">My Notes</h1>
 
-        {/* 🔍 SEARCH INPUT */}
+        {/* SEARCH */}
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search notes..."
-          className="border rounded-lg p-2 w-full mb-4"
+          className="border rounded-lg p-2 w-full mb-3"
         />
+
+        {/* CLEAR ALL */}
+        {notes.length > 0 && (
+          <button
+            onClick={clearAll}
+            className="text-sm text-red-500 mb-4"
+          >
+            Clear all notes
+          </button>
+        )}
 
         <NoteForm
           newNote={newNote}
@@ -85,7 +99,14 @@ export default function Notes() {
           addNote={addNote}
         />
 
-        <div className="space-y-3">
+        {/* EMPTY STATE */}
+        {filteredNotes.length === 0 && (
+          <p className="text-center text-gray-400 mt-10">
+            No notes found
+          </p>
+        )}
+
+        <div className="space-y-3 mt-4">
           {filteredNotes.map((note) => (
             <NoteItem
               key={note.id}
