@@ -1,107 +1,101 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Note } from '../types';
-import { Plus, Trash2, LogOut } from 'lucide-react';
+import { useState } from "react"
 
-export const Notes: React.FC = () => {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [newNote, setNewNote] = useState('');
-  const [loading, setLoading] = useState(true);
+type Note = {
+  id: number
+  content: string
+}
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+export default function Notes() {
+  const [notes, setNotes] = useState<Note[]>([])
+  const [newNote, setNewNote] = useState("")
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingContent, setEditingContent] = useState("")
 
-  const fetchNotes = async () => {
-    const { data, error } = await supabase
-      .from('notes')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const addNote = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newNote.trim()) return
 
-    if (error) console.error('Error fetching notes:', error);
-    else setNotes(data || []);
-    setLoading(false);
-  };
+    setNotes([...notes, { id: Date.now(), content: newNote }])
+    setNewNote("")
+  }
 
-  const addNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newNote.trim()) return;
+  const deleteNote = (id: number) => {
+    setNotes(notes.filter((note) => note.id !== id))
+  }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('notes')
-      .insert([{ content: newNote, user_id: user.id }]);
-
-    if (error) console.error('Error adding note:', error);
-    else {
-      setNewNote('');
-      fetchNotes();
-    }
-  };
-
-  const deleteNote = async (id: string) => {
-    const { error } = await supabase.from('notes').delete().eq('id', id);
-    if (error) console.error('Error deleting note:', error);
-    else fetchNotes();
-  };
-
-  const handleSignOut = () => supabase.auth.signOut();
+  const updateNote = (id: number) => {
+    setNotes(
+      notes.map((note) =>
+        note.id === id ? { ...note, content: editingContent } : note
+      )
+    )
+    setEditingId(null)
+    setEditingContent("")
+  }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">My Notes</h1>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition"
-        >
-          <LogOut size={20} />
-          <span>Sign Out</span>
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-100 flex justify-center pt-20">
+      <div className="w-full max-w-xl">
+        <h1 className="text-2xl font-bold mb-6 text-center">My Notes</h1>
 
-      <form onSubmit={addNote} className="mb-8 flex gap-2">
-        <input
-          type="text"
-          value={newNote}
-          onChange={(e) => setNewNote(e.target.value)}
-          placeholder="Write a new note..."
-          className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-        />
-        <button
-          type="submit"
-          className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
-        >
-          <Plus size={24} />
-        </button>
-      </form>
+        <form onSubmit={addNote} className="flex gap-2 mb-6">
+          <input
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            className="border rounded-lg p-2 w-full"
+            placeholder="Write a note..."
+          />
+          <button className="bg-blue-500 text-white px-4 rounded-lg">
+            Add
+          </button>
+        </form>
 
-      {loading ? (
-        <div className="text-center text-gray-500">Loading notes...</div>
-      ) : (
-        <div className="space-y-4">
-          {notes.length === 0 ? (
-            <p className="text-center text-gray-500 italic">No notes yet. Add one above!</p>
-          ) : (
-            notes.map((note) => (
+        <div className="space-y-3">
+          {notes.map((note) => {
+            const isEditing = editingId === note.id
+
+            return (
               <div
                 key={note.id}
-                className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex justify-between items-start group hover:shadow-md transition"
+                className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex justify-between items-start"
               >
-                <p className="text-gray-700 whitespace-pre-wrap">{note.content}</p>
+                {isEditing ? (
+                  <div className="flex-1">
+                    <input
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      className="border p-2 w-full rounded mb-2"
+                    />
+                    <button
+                      onClick={() => updateNote(note.id)}
+                      className="text-blue-500"
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  <p
+                    onClick={() => {
+                      setEditingId(note.id)
+                      setEditingContent(note.content)
+                    }}
+                    className="flex-1 cursor-pointer"
+                  >
+                    {note.content}
+                  </p>
+                )}
+
                 <button
                   onClick={() => deleteNote(note.id)}
-                  className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"
+                  className="text-red-500 ml-4"
                 >
-                  <Trash2 size={18} />
+                  Delete
                 </button>
               </div>
-            ))
-          )}
+            )
+          })}
         </div>
-      )}
+      </div>
     </div>
-  );
-};
+  )
+}
