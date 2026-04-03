@@ -1,96 +1,106 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { useState } from "react"
+
+type Note = {
+  id: number
+  content: string
+}
 
 export default function Notes() {
-  const [notes, setNotes] = useState<any[]>([]);
-  const [newNote, setNewNote] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingContent, setEditingContent] = useState("");
+  const [notes, setNotes] = useState<Note[]>([])
+  const [newNote, setNewNote] = useState("")
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingContent, setEditingContent] = useState("")
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+  const addNote = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newNote.trim()) return
 
-  async function fetchNotes() {
-    const { data } = await supabase.from("notes").select("*");
-    setNotes(data || []);
+    setNotes([...notes, { id: Date.now(), content: newNote }])
+    setNewNote("")
   }
 
-  async function addNote(e: any) {
-    e.preventDefault();
-    if (!newNote.trim()) return;
-
-    await supabase.from("notes").insert([{ content: newNote }]);
-    setNewNote("");
-    fetchNotes();
+  const deleteNote = (id: number) => {
+    setNotes(notes.filter((note) => note.id !== id))
   }
 
-  async function deleteNote(id: string) {
-    await supabase.from("notes").delete().eq("id", id);
-    fetchNotes();
-  }
-
-  async function updateNote(id: string) {
-    await supabase
-      .from("notes")
-      .update({ content: editingContent })
-      .eq("id", id);
-
-    setEditingId(null);
-    fetchNotes();
+  const updateNote = (id: number) => {
+    setNotes(
+      notes.map((note) =>
+        note.id === id ? { ...note, content: editingContent } : note
+      )
+    )
+    setEditingId(null)
+    setEditingContent("")
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h2>Notes</h2>
+    <div className="min-h-screen bg-gray-100 flex justify-center pt-20">
+      <div className="w-full max-w-xl">
 
-      <form onSubmit={addNote}>
-        <input
-          value={newNote}
-          onChange={(e) => setNewNote(e.target.value)}
-        />
-        <button type="submit">Add</button>
-      </form>
+        <h1 className="text-2xl font-bold mb-6 text-center">My Notes</h1>
 
-      {notes.map((note: any) => {
-  const isEditing = String(editingId) === String(note.id)
-
-  return (
-    <div
-      key={note.id}
-      className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex justify-between items-start"
-    >
-      {isEditing ? (
-        <div className="flex-1">
+        <form onSubmit={addNote} className="flex gap-2 mb-6">
           <input
-            value={editingContent}
-            onChange={(e) => setEditingContent(e.target.value)}
-            className="border p-1 w-full"
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            className="border rounded-lg p-2 w-full"
+            placeholder="Write a note..."
           />
-          <button onClick={() => updateNote(note.id)}>
-            Save
+          <button className="bg-blue-500 text-white px-4 rounded-lg">
+            Add
           </button>
-        </div>
-      ) : (
-        <p
-          <div
-  onClick={() => {
-    setEditingId(note.id)
-    setEditingContent(note.content)
-  }}
-  className="flex-1 cursor-pointer"
->
-  <p>{note.content}</p>
-</div>
-      )}
+        </form>
 
-      <button onClick={() => deleteNote(note.id)}>
-        Delete
-      </button>
+        <div className="space-y-3">
+          {notes.map((note) => {
+            const isEditing = editingId === note.id
+
+            return (
+              <div
+                key={note.id}
+                className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex justify-between items-start"
+              >
+
+                {/* EDIT MODE */}
+                {isEditing ? (
+                  <div className="flex-1">
+                    <input
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      className="border p-2 w-full rounded mb-2"
+                    />
+                    <button
+                      onClick={() => updateNote(note.id)}
+                      className="text-blue-500"
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  /* VIEW MODE */
+                  <div
+                    onClick={() => {
+                      setEditingId(note.id)
+                      setEditingContent(note.content)
+                    }}
+                    className="flex-1 cursor-pointer"
+                  >
+                    {note.content}
+                  </div>
+                )}
+
+                <button
+                  onClick={() => deleteNote(note.id)}
+                  className="text-red-500 ml-4"
+                >
+                  Delete
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
+      </div>
     </div>
   )
-})}
-
-    </div>
-  );
 }
