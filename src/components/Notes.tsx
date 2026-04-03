@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import NoteForm from "./NoteForm"
 import NoteItem from "./NoteItem"
 
@@ -27,6 +27,15 @@ export default function Notes() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingContent, setEditingContent] = useState("")
   const [search, setSearch] = useState("")
+  const [dark, setDark] = useLocalStorage<boolean>("darkMode", false)
+
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }, [dark])
 
   const addNote = (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,20 +79,31 @@ export default function Notes() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center pt-20">
+    <div className="min-h-screen flex justify-center pt-20 bg-gray-100 dark:bg-gray-900 transition">
+
       <div className="w-full max-w-xl">
 
-        <h1 className="text-2xl font-bold mb-4 text-center">My Notes</h1>
+        {/* DARK MODE TOGGLE */}
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={() => setDark(!dark)}
+            className="text-sm px-3 py-1 border rounded-lg dark:text-white"
+          >
+            {dark ? "☀️ Light" : "🌙 Dark"}
+          </button>
+        </div>
 
-        {/* SEARCH */}
+        <h1 className="text-2xl font-bold mb-4 text-center dark:text-white">
+          My Notes
+        </h1>
+
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search notes..."
-          className="border rounded-lg p-2 w-full mb-3"
+          className="border rounded-lg p-2 w-full mb-3 dark:bg-gray-800 dark:text-white"
         />
 
-        {/* CLEAR ALL */}
         {notes.length > 0 && (
           <button
             onClick={clearAll}
@@ -99,7 +119,6 @@ export default function Notes() {
           addNote={addNote}
         />
 
-        {/* EMPTY STATE */}
         {filteredNotes.length === 0 && (
           <p className="text-center text-gray-400 mt-10">
             No notes found
